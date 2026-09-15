@@ -19,15 +19,6 @@ This database models a production-grade billing, invoicing, and subscription lif
 
 ## 🗄️ 2. Entity Relationship Diagram (ERD)
 
-### Visual Schema Diagram
-<p align="center">
-  <img src="erd_diagram.svg" width="100%" alt="Netflix Billing Relational Schema ERD Diagram" />
-</p>
-
-> [!NOTE]
-> Interactive HTML viewer is also included in this repository: [`netflix_billing_schema_erd.html`](netflix_billing_schema_erd.html).
-
-### Live Interactive Mermaid ERD
 ```mermaid
 erDiagram
   USERS ||--o{ SUBSCRIPTIONS : has
