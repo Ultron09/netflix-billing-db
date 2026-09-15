@@ -17,11 +17,19 @@ This database models a production-grade billing, invoicing, and subscription lif
 
 ---
 
-## 🗄️ 2. Entity Relationship Diagram (ERD) Mapping
+## 🗄️ 2. Entity Relationship Diagram (ERD)
 
-Source HTML: `file:///home/ultron/Downloads/netflix_billing_schema_erd.html`
+### Visual Schema Diagram
+<p align="center">
+  <img src="erd_diagram.svg" width="100%" alt="Netflix Billing Relational Schema ERD Diagram" />
+</p>
 
-```
+> [!NOTE]
+> Interactive HTML viewer is also included in this repository: [`netflix_billing_schema_erd.html`](netflix_billing_schema_erd.html).
+
+### Live Interactive Mermaid ERD
+```mermaid
+erDiagram
   USERS ||--o{ SUBSCRIPTIONS : has
   USERS ||--o{ PAYMENT_METHODS : owns
   SUBSCRIPTION_PLANS ||--o{ SUBSCRIPTIONS : defines
@@ -30,6 +38,79 @@ Source HTML: `file:///home/ultron/Downloads/netflix_billing_schema_erd.html`
   INVOICES ||--o{ PAYMENTS : settled_by
   TAX_RATES ||--o{ INVOICES : applied_to
   INVOICES ||--o{ REVENUE_LEDGER : recognized_as
+
+  USERS {
+    bigint id PK
+    varchar email UK
+    varchar full_name
+    char country_code
+    enum account_status
+    timestamp created_at
+  }
+  SUBSCRIPTION_PLANS {
+    bigint id PK
+    varchar plan_name
+    enum tier
+    decimal monthly_price
+    char currency_code
+    boolean is_active
+  }
+  SUBSCRIPTIONS {
+    bigint id PK
+    bigint user_id FK
+    bigint plan_id FK
+    enum status
+    date start_date
+    date next_billing_date
+    boolean auto_renew
+    timestamp cancelled_at
+  }
+  PAYMENT_METHODS {
+    bigint id PK
+    bigint user_id FK
+    enum method_type
+    varchar provider
+    char last4
+    date expiry_date
+    boolean is_default
+  }
+  INVOICES {
+    bigint id PK
+    bigint subscription_id FK
+    bigint tax_rate_id FK
+    varchar invoice_number UK
+    date billing_period_start
+    date billing_period_end
+    decimal subtotal_amount
+    decimal tax_amount
+    decimal total_amount
+    enum status
+  }
+  PAYMENTS {
+    bigint id PK
+    bigint invoice_id FK
+    bigint payment_method_id FK
+    decimal amount
+    enum status
+    varchar processor_ref
+    timestamp processed_at
+  }
+  TAX_RATES {
+    bigint id PK
+    char country_code
+    varchar region_code
+    varchar tax_type
+    decimal rate_percent
+    date effective_from
+  }
+  REVENUE_LEDGER {
+    bigint id PK
+    bigint invoice_id FK
+    decimal recognized_amount
+    enum revenue_type
+    date recognition_date
+    varchar gl_account_code
+  }
 ```
 
 ### Table Breakdown (8 Relational Tables)
