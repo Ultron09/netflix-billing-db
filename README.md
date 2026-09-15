@@ -3,6 +3,8 @@
 Autonomous Relational Database Engine built from `netflix_billing_schema_erd.html`.  
 Implemented using **SQLite 3**, the industry-standard lightweight, serverless, zero-configuration SQL relational database engine.
 
+> ⚡ **Live Database Telemetry**: View all table records, relational foreign key lineages, and transaction flowcharts in [**`LIVE_DATABASE.md`**](LIVE_DATABASE.md).
+
 ---
 
 ## 📌 1. Project Overview & Architecture
