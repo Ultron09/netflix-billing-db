@@ -130,6 +130,23 @@ erDiagram
 - Automated Populator: `/home/ultron/Projects/netflix_billing_db/populate_db.py`
 - Analytical Queries: `/home/ultron/Projects/netflix_billing_db/queries.sql`
 - Terminal Explorer: `/home/ultron/Projects/netflix_billing_db/explore.py`
+- Dedicated CLI Command: `/home/ultron/.local/bin/sql-netflix`
+
+### ⚡ Global CLI Command: `sql-netflix`
+Available globally in your terminal:
+```bash
+# 1. Launch interactive boxed SQL console (prompts for queries)
+sql-netflix
+
+# 2. Run a direct query with boxed terminal output
+sql-netflix "SELECT id, full_name, email, country_code FROM USERS LIMIT 5;"
+
+# 3. View database table counts matrix
+sql-netflix tables
+
+# 4. Run the assignment analytical query suite
+sql-netflix queries
+```
 
 ### 1. Rebuild or Reset the Database
 ```bash

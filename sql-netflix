@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# ⚡ ULTRON // sql-netflix
+# Interactive Terminal SQL Console for the Netflix Billing & Subscription Database
+# ==============================================================================
+
+DB_DIR="/home/ultron/Projects/netflix_billing_db"
+DB_FILE="$DB_DIR/netflix_billing.db"
+
+# Auto-initialize database if it does not exist
+if [ ! -f "$DB_FILE" ]; then
+    echo -e "\033[1;33m[!] Database not found at $DB_FILE. Initializing...\033[0m"
+    if [ -f "$DB_DIR/populate_db.py" ]; then
+        python3 "$DB_DIR/populate_db.py"
+    else
+        echo -e "\033[1;31m[ERROR] populate_db.py not found in $DB_DIR.\033[0m"
+        exit 1
+    fi
+fi
+
+# Help / Usage
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo -e "\033[1;36m⚡ ULTRON // sql-netflix Console Usage:\033[0m"
+    echo -e "  \033[1;32msql-netflix\033[0m                       Launch interactive SQL shell"
+    echo -e "  \033[1;32msql-netflix \"<SQL_QUERY>\"\033[0m         Execute query and print table in terminal"
+    echo -e "  \033[1;32msql-netflix tables\033[0m                Show all tables and record count matrix"
+    echo -e "  \033[1;32msql-netflix init\033[0m                  Re-seed / re-initialize the database"
+    echo -e "  \033[1;32msql-netflix queries\033[0m               Run analytical assignment query suite"
+    exit 0
+fi
+
+# Re-initialize command
+if [ "$1" = "init" ] || [ "$1" = "--init" ]; then
+    echo -e "\033[1;36m⚡ ULTRON // Re-seeding Netflix Database...\033[0m"
+    python3 "$DB_DIR/populate_db.py"
+    exit $?
+fi
+
+# Summary / tables command
+if [ "$1" = "tables" ] || [ "$1" = "--tables" ]; then
+    if [ -x "$DB_DIR/explore.py" ]; then
+        "$DB_DIR/explore.py" summary
+    else
+        sqlite3 -cmd ".mode box" "$DB_FILE" "
+        SELECT 'USERS' AS [table], count(*) AS records FROM USERS
+        UNION ALL SELECT 'SUBSCRIPTION_PLANS', count(*) FROM SUBSCRIPTION_PLANS
+        UNION ALL SELECT 'TAX_RATES', count(*) FROM TAX_RATES
+        UNION ALL SELECT 'SUBSCRIPTIONS', count(*) FROM SUBSCRIPTIONS
+        UNION ALL SELECT 'PAYMENT_METHODS', count(*) FROM PAYMENT_METHODS
+        UNION ALL SELECT 'INVOICES', count(*) FROM INVOICES
+        UNION ALL SELECT 'PAYMENTS', count(*) FROM PAYMENTS
+        UNION ALL SELECT 'REVENUE_LEDGER', count(*) FROM REVENUE_LEDGER;
+        "
+    fi
+    exit 0
+fi
+
+# Run predefined analytical queries
+if [ "$1" = "queries" ] || [ "$1" = "--queries" ]; then
+    echo -e "\033[1;36m⚡ ULTRON // Executing Analytical Assignment Queries...\033[0m\n"
+    sqlite3 "$DB_FILE" < "$DB_DIR/queries.sql"
+    exit $?
+fi
+
+# Direct single query execution
+if [ $# -gt 0 ]; then
+    sqlite3 \
+        -cmd ".mode box" \
+        -cmd "PRAGMA foreign_keys = ON;" \
+        "$DB_FILE" "$*"
+    exit $?
+fi
+
+# Interactive Terminal SQL Shell
+echo -e "\033[1;36m⚡ ULTRON // NETFLIX SQL CONSOLE\033[0m"
+echo -e "\033[0;90m────────────────────────────────────────────────────────────────────────────\033[0m"
+echo -e " \033[1;32m● Database:\033[0m $DB_FILE"
+echo -e " \033[1;32m● Schema:\033[0m   USERS | SUBSCRIPTION_PLANS | TAX_RATES | SUBSCRIPTIONS"
+echo -e "             PAYMENT_METHODS | INVOICES | PAYMENTS | REVENUE_LEDGER"
+echo -e " \033[1;33m● Usage:\033[0m    Type your SQL query ending with \033[1;33m;\033[0m to execute in terminal."
+echo -e "             Type \033[1;35m.tables\033[0m to list tables, \033[1;35m.schema <table>\033[0m for DDL."
+echo -e "             Type \033[1;31m.exit\033[0m (or Ctrl+D) to quit."
+echo -e "\033[0;90m────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
+exec sqlite3 \
+    -cmd ".mode box" \
+    -cmd "PRAGMA foreign_keys = ON;" \
+    -cmd ".prompt 'netflix-sql> ' '         ...> '" \
+    "$DB_FILE"
