@@ -1,0 +1,135 @@
+<h2 class="sr-only">Entity relationship diagram of a production-level billing and subscription database, showing 8 tables and their foreign key relationships.</h2>
+<style>
+#erd svg.erDiagram .divider path { stroke-opacity: 0.5; }
+#erd svg.erDiagram .row-rect-odd path,
+#erd svg.erDiagram .row-rect-odd rect,
+#erd svg.erDiagram .row-rect-even path,
+#erd svg.erDiagram .row-rect-even rect { stroke: none !important; }
+</style>
+<div id="erd"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const themeMode = document.documentElement.dataset.mode;
+const dark = themeMode ? themeMode === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"anthropic-sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"anthropic-sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+  },
+});
+const { svg } = await mermaid.render('erd-svg', `erDiagram
+  USERS ||--o{ SUBSCRIPTIONS : has
+  USERS ||--o{ PAYMENT_METHODS : owns
+  SUBSCRIPTION_PLANS ||--o{ SUBSCRIPTIONS : defines
+  SUBSCRIPTIONS ||--o{ INVOICES : generates
+  PAYMENT_METHODS ||--o{ PAYMENTS : used_in
+  INVOICES ||--o{ PAYMENTS : settled_by
+  TAX_RATES ||--o{ INVOICES : applied_to
+  INVOICES ||--o{ REVENUE_LEDGER : recognized_as
+
+  USERS {
+    bigint id PK
+    varchar email UK
+    varchar full_name
+    char country_code
+    enum account_status
+    timestamp created_at
+  }
+  SUBSCRIPTION_PLANS {
+    bigint id PK
+    varchar plan_name
+    enum tier
+    decimal monthly_price
+    char currency_code
+    boolean is_active
+  }
+  SUBSCRIPTIONS {
+    bigint id PK
+    bigint user_id FK
+    bigint plan_id FK
+    enum status
+    date start_date
+    date next_billing_date
+    boolean auto_renew
+    timestamp cancelled_at
+  }
+  PAYMENT_METHODS {
+    bigint id PK
+    bigint user_id FK
+    enum method_type
+    varchar provider
+    char last4
+    date expiry_date
+    boolean is_default
+  }
+  INVOICES {
+    bigint id PK
+    bigint subscription_id FK
+    bigint tax_rate_id FK
+    varchar invoice_number UK
+    date billing_period_start
+    date billing_period_end
+    decimal subtotal_amount
+    decimal tax_amount
+    decimal total_amount
+    enum status
+  }
+  PAYMENTS {
+    bigint id PK
+    bigint invoice_id FK
+    bigint payment_method_id FK
+    decimal amount
+    enum status
+    varchar processor_ref
+    timestamp processed_at
+  }
+  TAX_RATES {
+    bigint id PK
+    char country_code
+    varchar region_code
+    varchar tax_type
+    decimal rate_percent
+    date effective_from
+  }
+  REVENUE_LEDGER {
+    bigint id PK
+    bigint invoice_id FK
+    decimal recognized_amount
+    enum revenue_type
+    date recognition_date
+    varchar gl_account_code
+  }
+`);
+document.getElementById('erd').innerHTML = svg;
+
+document.querySelectorAll('#erd svg.erDiagram .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+
+document.querySelectorAll('#erd svg.erDiagram .row-rect-odd path, #erd svg.erDiagram .row-rect-even path').forEach(p => {
+  p.setAttribute('stroke', 'none');
+});
+</script>
