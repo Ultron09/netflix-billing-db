@@ -98,19 +98,62 @@ erDiagram
 
 ---
 
-## 🔄 2. Transactional Lifecycle Pipeline (Mermaid Flowchart)
+## 🔄 2. Transactional Lifecycle Pipeline
 
+### A. Stage-by-Stage Architecture Pipeline (Flowchart)
 ```mermaid
-flowchart TD
-    U[USERS] -->|1. Registers Account| SUB[SUBSCRIPTIONS]
-    U -->|2. Vaults Card / UPI / PayPal| PM[PAYMENT_METHODS]
-    PLAN[SUBSCRIPTION_PLANS] -->|3. Pricing Tier Applied| SUB
-    SUB -->|4. Monthly Billing Cycle| INV[INVOICES]
-    TAX[TAX_RATES] -->|5. Jurisdictional Rate Applied| INV
-    INV -->|6. Payment Triggered| PAY[PAYMENTS]
-    PM -->|7. Charges Vaulted Instrument| PAY
-    PAY -->|8. On Settlement: Succeeded| REV[REVENUE_LEDGER]
-    INV -->|9. Recognized as GAAP/IFRS Revenue| REV
+flowchart LR
+    subgraph S1["1. Onboarding Phase"]
+        U["USERS"]
+        PLAN["SUBSCRIPTION_PLANS"]
+        SUB["SUBSCRIPTIONS"]
+        PM["PAYMENT_METHODS"]
+        U --> SUB
+        PLAN --> SUB
+        U --> PM
+    end
+
+    subgraph S2["2. Invoicing & Tax Phase"]
+        TAX["TAX_RATES"]
+        INV["INVOICES"]
+        SUB --> INV
+        TAX --> INV
+    end
+
+    subgraph S3["3. Settlement Phase"]
+        PAY["PAYMENTS"]
+        INV --> PAY
+        PM --> PAY
+    end
+
+    subgraph S4["4. Accounting Phase"]
+        REV["REVENUE_LEDGER"]
+        PAY --> REV
+    end
+```
+
+### B. End-to-End Billing Lifecycle (Sequence Diagram)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User / Subscriber
+    participant Sub as Subscriptions
+    participant Plan as Plans Catalog
+    participant PM as Payment Vault
+    participant Inv as Invoice Engine
+    participant Tax as Tax Rates
+    participant Pay as Payment Gateway
+    participant Rev as Revenue Ledger
+
+    User->>Plan: Select Plan Tier (Basic, Standard, Premium)
+    Plan-->>Sub: Initialize Subscription Lifecycle
+    User->>PM: Tokenize Payment Instrument (UPI, Card, PayPal)
+    Sub->>Inv: Generate Monthly Billing Period Invoice
+    Tax-->>Inv: Calculate Jurisdictional Tax (GST, VAT, Sales Tax)
+    Inv->>Pay: Submit Invoice Total for Settlement
+    PM-->>Pay: Authorize & Charge Default Vaulted Method
+    Pay-->>Inv: Reconcile Invoice Status to PAID
+    Pay->>Rev: Recognize Net Revenue to GL Account (ASC 606)
 ```
 
 ---
